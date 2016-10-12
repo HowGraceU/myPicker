@@ -5,28 +5,23 @@ document.write('<meta name="viewport" content="width=device-width,initial-scale=
 
 
 function Picker(json){
-	var height = Math.round(parseInt($('html').css('font-size'))* 0.4);
-	this.init(json.data, json.objs, height);
-	this.doEvent(height);
+	this.height = Math.round(parseInt($('html').css('font-size'))* 0.4);
+	this.objs = json.objs;
+	this.init(json.data, this.objs, this.height);
+	this.doEvent(this.height);
+	this.num = 0;
+	this.callback = json.callback;
 
-	$('#sure').on('touchend', function(){
-		var text = [],
-			objs = json.objs,
-			callback = json.callback;
-		$('#picker-wrap .selected').each(function(i, obj){
-			var value = $(obj).text();
-			objs.eq(i).text(value)
-			objs.eq(i).val(value)
-			text.push(value)
-		})
-
-		typeof callback === 'function'? callback(text) : {};
-	})
 }
 
 Picker.prototype = {
 	'constructor' : Picker,
 	'init': function(Arr, objs, height){
+		objs.each(function(index, el) {
+			console.log(el)
+			el.tagName == 'INPUT'? $(el).attr('readonly', 'readonly'): {};
+		});
+
 		var html = '',
 			pos = [];
 		for(var i = 0, iLength = Arr.length; i < iLength; i++){
@@ -65,56 +60,99 @@ Picker.prototype = {
 			event.stopPropagation();
 		})
 		$('.picker-scroll ul').on('scroll', function(event){
-					console.log(2)
 			t.pickerScroll(event, height);
 		})
-	},
+		$('#sure').on('click', function(){
+			var text = [],
+				objs = t.objs,
+				callback = t.callback;
+			$('#picker-wrap .selected').each(function(i, obj){
+				var value = $(obj).text();
+				objs.eq(i).text(value)
+				objs.eq(i).val(value)
+				text.push(value)
+			})
 
-	'pickerScroll': function(event, height){
-		var t = this,
-			that = $(event.target),
-			num = 0,
-			x = 0,
-			i = 0;
-
-		that.on('touchend', function(){
-			that.attr('touchend', 'true');
-			if(that.attr('scrollend')){
-				t.scrollTo(that, num, height);
-			}
-		})
-		that.on('scroll', function(event){
-			var scrTop = that.scrollTop();
-			that.removeAttr('scrollend');
-
-			x = Math.round(scrTop/height);
-			num = x == num? num: x;
-
-			setTimeout(function(){
-				var nowTop = that.scrollTop();
-				if(scrTop == nowTop){
-					that.attr('scrollend', 'true');
-					if(that.attr('touchend')){
-						t.scrollTo(that, num, height);
-					}
+			typeof callback === 'function'? callback(text) : {};
+		});
+		if (!/(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent)) {
+			$('.picker-scroll ul').on('touchend', function(){
+				var that = $(this);
+				that.attr('touchend', 'true');
+				if(that.attr('scrollend')){
+					t.scrollTo(that, t.num, height);
 				}
-			}, 200);
-		})
+			})
+		}
 	},
 
-	'scrollTo': function(that, num, height){
+	'pickerScroll': (function(){
+		if (/(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent)) {
+			return function(event, height){
+				var t = this,
+					that = $(event.target),
+					num;
+
+				var scrTop = that.scrollTop();
+				num = Math.round(scrTop/height);
+
+				that.off('scroll');
+				t.scrollTo(that, num, height, function () {
+					that.on('scroll', function(event){
+						t.pickerScroll(event, height);
+					})
+				});
+			}
+		} else {
+			return function(event, height){
+				var t = this,
+					that = $(event.target),
+					x = 0,
+					i = 0;
+
+				var scrTop = that.scrollTop();
+				that.removeAttr('scrollend');
+
+				x = Math.round(scrTop/height);
+				t.num = x == t.num? t.num: x;
+
+				setTimeout(function(){
+					var nowTop = that.scrollTop(),
+					num = t.num;
+					if(scrTop == nowTop){
+						that.attr('scrollend', 'true');
+						if(that.attr('touchend')){
+							t.scrollTo(that, num, height, function () {
+								that.removeAttr('touchend');
+								that.removeAttr('scrollend');
+							});
+						}
+					}
+				}, 200);
+			}
+		}
+	})(),
+
+	'scrollTo': function(that, num, height, callback){
 		var scrTop = that.scrollTop(),
 			toTop = num * height,
-			speed = (toTop - scrTop) / 5;
+			speed = (toTop - scrTop) / 5,
+			i = 0;
 
-		for(var i = 0; i < 5; i++){
+		function move(){
 			setTimeout(function(){
-				that.scrollTop(scrTop += speed);
-			}, i * 20)
+				if(i !== 5){
+					that.scrollTop(scrTop += speed);
+					i++;
+					move();
+				} else {
+					that.children().eq(num + 2).addClass('selected').siblings('.selected').removeClass('selected');
+
+					typeof callback === 'function' && callback();
+				}
+			}, 20)
 		}
 
-		that.children().eq(num + 2).addClass('selected').siblings('.selected').removeClass('selected');
-
-		that.removeAttr('touchend').removeAttr('scrollend');
+		move();
 	}
 }

@@ -6,11 +6,24 @@
 	<script type="text/javascript" src="zepto.min.js"></script>
 	<script type="text/javascript" src="_picker.js"></script>
 	<link rel="stylesheet" type="text/css" href="_picker.css">
+	<style type="text/css">
+		#duoxuan{
+			font-size: .3rem;
+		}
+		#duoxuan li{
+			display: inline-block;
+		}
+	</style>
 </head>
 <body>
 <label style="font-size: .3rem">名字：</label>
 <input id="text" type="text" name="" style="width: 3rem; height: .5rem; font-size: .3rem" value="8">
 
+<ul id="duoxuan">
+	<li>学校:<em class="option">6</em></li>
+	<li>班级:<em class="option">5</em></li>
+	<li>姓名:<em class="option">赵</em></li>
+</ul>
 <div id="picker" class="z-index999">
 	<div id="picker-main">
 		<div id="picker-wrap" class="clearfix">
@@ -25,15 +38,37 @@
 	$(function(){
 		var text = $('#text');
 
+		// 传入一个json对象，json包括data（数据），objs（对象），callback回调函数
+		// 数据格式为
+		// [{
+		// 	'name':第一个选项的标题,
+		// 	'option':[选项的内容数组]
+		// },{
+		// 	'name':第二个选项的标题,
+		// 	'option':[选项的内容数组]
+		// }]
+
 		text.on('click', function(){
 			var picker = new Picker({
-				'data': [{'name': '名字', 'option': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}],
+				'data': [{'name': '学校', 'option': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}],
 				'objs': text,
 				'callback': function(text){
 					console.log(text)
 				}
 			});
 		})
+
+		var duoxuan = $('#duoxuan');
+
+		duoxuan.on('click', function(event) {
+			var picker = new Picker({
+				'data': [{'name': '学校', 'option': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}, {'name': '班级', 'option': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}, {'name': '名字', 'option': ['赵', '钱', '孙', '李']}],
+				'objs': duoxuan.find('.option'),
+				'callback': function(text){
+					console.log(text)
+				}
+			});
+		});
 	})
 </script>
 </body>
