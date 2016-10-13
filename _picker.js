@@ -104,6 +104,7 @@ Picker.prototype = {
 				});
 			}
 		} else {
+			this.timer = null;
 			return function(event, height){
 				var t = this,
 					that = $(event.target),
@@ -116,17 +117,19 @@ Picker.prototype = {
 				x = Math.round(scrTop/height);
 				t.num = x == t.num? t.num: x;
 
-				setTimeout(function(){
-					var nowTop = that.scrollTop(),
-					num = t.num;
-					if(scrTop == nowTop){
-						that.attr('scrollend', 'true');
-						if(that.attr('touchend')){
-							t.scrollTo(that, num, height, function () {
-								that.removeAttr('touchend');
-								that.removeAttr('scrollend');
-							});
-						}
+				clearTimeout(this.timer);
+				this.timer = setTimeout(function(){
+					var num = t.num;
+					that.attr('scrollend', 'true');
+					if(that.attr('touchend')){
+						that.off('scroll');
+						t.scrollTo(that, num, height, function () {
+							that.removeAttr('touchend');
+							that.removeAttr('scrollend');
+							that.on('scroll', function(event){
+								t.pickerScroll(event, height);
+							})
+						});
 					}
 				}, 200);
 			}
